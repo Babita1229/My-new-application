@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        canvas {
+            border: 2px solid #3725db;
+            background-color: #000;
+        }
+
+        p {
+            font-size: 1.5em;
+            margin-top: 10px;
+        }
+
+        /* Style the Try Again button */
+        .retry {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 1.5em;
+            color: #fff;
+            background-color: #ff6347;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .retry:hover {
+            background-color: #ff4500;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Snake Game</h1>
+    <canvas id="gameCanvas"></canvas>
+    <button class="retry" onclick="restartGame()">Try Again</button>
+    <p>Score: <span id="score">0</span></p>
+    <script src="script.js"></script>
+</body>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const retryButton = document.querySelector(".retry");
+
+    // Canvas dimensions
+    canvas.width = 400;
+    canvas.height = 400;
+
+    // Game variables
+    let boxSize = 20;
+    let score = 0;
+    let snake;
+    let direction;
+    let food;
+    let game;
+
+    // Initialize the game state
+    function initializeGame() {
+        score = 0;
+        snake = [{ x: boxSize * 5, y: boxSize * 5 }];
+        direction = "RIGHT";
+        document.getElementById("score").innerText = score;
+        food = generateFood();
+    }
+
+    // Generate random food position
+    function generateFood() {
+        return {
+            x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
+            y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize
+        };
+    }
+
+    // Control the snake direction with arrow keys
+    document.addEventListener("keydown", changeDirection);
+
+    function changeDirection(event) {
+        if (event.key === "ArrowUp" && direction !== "DOWN") {
+            direction = "UP";
+        } else if (event.key === "ArrowDown" && direction !== "UP") {
+            direction = "DOWN";
+        } else if (event.key === "ArrowLeft" && direction !== "RIGHT") {
+            direction = "LEFT";
+        } else if (event.key === "ArrowRight" && direction !== "LEFT") {
+            direction = "RIGHT";
+        }
+    }
+
+    // Draw the game
+    function draw() {
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the food as a circle
+        ctx.fillStyle = "red";
+        ctx.beginPath();
+        ctx.arc(food.x + boxSize / 2, food.y + boxSize / 2, boxSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw the snake as circles
+        ctx.fillStyle = "lime";
+        for (let segment of snake) {
+            ctx.beginPath();
+            ctx.arc(segment.x + boxSize / 2, segment.y + boxSize / 2, boxSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Move the snake
+        let head = { ...snake[0] };
+        if (direction === "UP") head.y -= boxSize;
+        if (direction === "DOWN") head.y += boxSize;
+        if (direction === "LEFT") head.x -= boxSize;
+        if (direction === "RIGHT") head.x += boxSize;
+
+        // Add new head to the snake
+        snake.unshift(head);
+
+        // Check if the snake has eaten the food
+        if (head.x === food.x && head.y === food.y) {
+            score++;
+            document.getElementById("score").innerText = score;
+            food = generateFood();
+        } else {
+            // Remove the last part of the snake if no food is eaten
+            snake.pop();
+        }
+
+        // Check for collision with walls or self
+        if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || isCollision(head)) {
+            endGame();
+        }
+    }
+
+    // Check if the snake collides with itself
+    function isCollision(head) {
+        for (let i = 1; i < snake.length; i++) {
+            if (snake[i].x === head.x && snake[i].y === head.y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // End the game
+    function endGame() {
+        clearInterval(game);
+        retryButton.style.display = "block";  // Show the "Try Again" button
+    }
+
+    // Restart the game
+    function restartGame() {
+        retryButton.style.display = "none";  // Hide the "Try Again" button
+        initializeGame();
+        game = setInterval(draw, 100);  // Restart the game loop
+    }
+
+    // Start the game for the first time
+    initializeGame();
+    game = setInterval(draw, 100);
+</script>
+
+</html>

@@ -4,19 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
+    <title>Responsive Snake Game with Leaderboard</title>
     <style>
         body {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
             background-color: #7f6c9a;
             color: #fff;
+            margin: 0;
+            height: 100vh;
+            flex-wrap: wrap;
         }
 
-        h1 {
-            margin-top: 20px;
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
         }
 
         canvas {
@@ -24,41 +30,129 @@
             background-color: #1a1212;
         }
 
-        p {
-            font-size: 1.5em;
-            margin-top: 10px;
-        }
-
         .retry {
             display: none;
-            position: absolute;
-            top: 35%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px;
-            font-size: 1.5em;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1em;
             color: #fff;
             background-color: #ff6347;
             border: none;
-            border-radius: 10px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
         .retry:hover {
             background-color: #ff4500;
         }
+
+        .leaderboard-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #4b4276;
+            padding: 15px;
+            width: 250px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .leaderboard-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            background: #695a94;
+            border-radius: 5px;
+        }
+
+        .leaderboard-item span {
+            font-size: 1em;
+        }
+
+        .player-input {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-input input {
+            padding: 5px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .player-input button {
+            padding: 5px 15px;
+            font-size: 1em;
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .player-input button:hover {
+            background: #45a049;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .game-container {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+
+            .leaderboard-container {
+                width: 90%;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <h1>Snake Game</h1>
-    <canvas id="gameCanvas"></canvas>
-    <button class="retry" onclick="restartGame()">Try Again</button>
-    <p>Score: <span id="score">0</span></p>
+    <div class="game-container">
+        <h1>Snake Game</h1>
+        <canvas id="gameCanvas"></canvas>
+        <button class="retry" onclick="restartGame()">Try Again</button>
+        <p>Score: <span id="score">0</span></p>
+    </div>
+
+    <div class="leaderboard-container">
+        <div class="player-input">
+            <input id="playerName" type="text" placeholder="Enter your name" />
+            <button onclick="startGame()">Start Game</button>
+        </div>
+        <h2 class="leaderboard-title">Leaderboard</h2>
+        <ul id="leaderboard" class="leaderboard-list"></ul>
+    </div>
+
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const retryButton = document.querySelector(".retry");
+        const leaderboardList = document.getElementById("leaderboard");
+        const playerNameInput = document.getElementById("playerName");
 
         canvas.width = 400;
         canvas.height = 400;
@@ -69,8 +163,10 @@
         let direction;
         let food;
         let game;
-        let onePointBallCount = 0;  // Count for 1-point balls
+        let onePointBallCount = 0;
         let isGameOver = false;
+        let leaderboard = [];
+        let playerName = "";
 
         function initializeGame() {
             score = 0;
@@ -78,37 +174,28 @@
             direction = "RIGHT";
             document.getElementById("score").innerText = score;
             food = generateFood();
-            onePointBallCount = 0;  // Reset count for new game
+            onePointBallCount = 0;
             isGameOver = false;
         }
 
         function generateFood() {
-            let foodType = 1; 
-            // Show a 15-point food after every 5 one-point foods
-            if (onePointBallCount >= 5) {
-                foodType = 15;  // 15-point food ball
-                onePointBallCount = 0;  // Reset the count after 15-point ball
-            }
+            let foodType = onePointBallCount >= 5 ? 15 : 1;
+            if (foodType === 15) onePointBallCount = 0;
 
             return {
                 x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
                 y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize,
-                type: foodType
+                type: foodType,
             };
         }
 
         document.addEventListener("keydown", changeDirection);
 
         function changeDirection(event) {
-            if (event.key === "ArrowUp" && direction !== "DOWN") {
-                direction = "UP";
-            } else if (event.key === "ArrowDown" && direction !== "UP") {
-                direction = "DOWN";
-            } else if (event.key === "ArrowLeft" && direction !== "RIGHT") {
-                direction = "LEFT";
-            } else if (event.key === "ArrowRight" && direction !== "LEFT") {
-                direction = "RIGHT";
-            }
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+            else if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
         }
 
         function draw() {
@@ -116,30 +203,19 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (food.type === 1) {
-                ctx.fillStyle = "red";
-                ctx.beginPath();
-                ctx.arc(food.x + boxSize / 2, food.y + boxSize / 2, boxSize / 2, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (food.type === 15) {
-                ctx.fillStyle = "darkgoldenrod";
-                ctx.beginPath();
-                ctx.arc(food.x + boxSize / 2, food.y + boxSize / 2, boxSize / 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.fillStyle = food.type === 1 ? "red" : "gold";
+            ctx.fillRect(food.x, food.y, boxSize, boxSize);
 
             ctx.fillStyle = "lime";
             for (let segment of snake) {
-                ctx.beginPath();
-                ctx.arc(segment.x + boxSize / 2, segment.y + boxSize / 2, boxSize / 2, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillRect(segment.x, segment.y, boxSize, boxSize);
             }
 
             let head = { ...snake[0] };
             if (direction === "UP") head.y -= boxSize;
-            if (direction === "DOWN") head.y += boxSize;
-            if (direction === "LEFT") head.x -= boxSize;
-            if (direction === "RIGHT") head.x += boxSize;
+            else if (direction === "DOWN") head.y += boxSize;
+            else if (direction === "LEFT") head.x -= boxSize;
+            else if (direction === "RIGHT") head.x += boxSize;
 
             snake.unshift(head);
 
@@ -147,40 +223,55 @@
                 score += food.type;
                 document.getElementById("score").innerText = score;
                 onePointBallCount++;
-
                 food = generateFood();
-            } else {
-                snake.pop();
-            }
+            } else snake.pop();
 
-            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || isCollision(head)) {
+            if (
+                head.x < 0 ||
+                head.x >= canvas.width ||
+                head.y < 0 ||
+                head.y >= canvas.height ||
+                snake.slice(1).some((segment) => segment.x === head.x && segment.y === head.y)
+            ) {
                 endGame();
             }
         }
 
-        function isCollision(head) {
-            for (let i = 1; i < snake.length; i++) {
-                if (snake[i].x === head.x && snake[i].y === head.y) {
-                    return true;
-                }
-            }
-            return false;
+        function updateLeaderboard() {
+            leaderboard = leaderboard.filter((entry) => entry.name !== playerName);
+            leaderboard.push({ name: playerName, score });
+            leaderboard.sort((a, b) => b.score - a.score);
+
+            leaderboardList.innerHTML = "";
+            leaderboard.slice(0, 3).forEach((entry) => {
+                const li = document.createElement("li");
+                li.classList.add("leaderboard-item");
+                li.innerHTML = `<span>${entry.name}</span><span>${entry.score}</span>`;
+                leaderboardList.appendChild(li);
+            });
         }
 
         function endGame() {
             isGameOver = true;
             clearInterval(game);
-            retryButton.style.display = "block";  
+            retryButton.style.display = "block";
+            updateLeaderboard();
         }
 
         function restartGame() {
             retryButton.style.display = "none";
             initializeGame();
-            game = setInterval(draw, 220);
+            game = setInterval(draw, 200);
+        }
+
+        function startGame() {
+            playerName = playerNameInput.value.trim() || "Player";
+            playerNameInput.value = "";
+            initializeGame();
+            game = setInterval(draw, 200);
         }
 
         initializeGame();
-        game = setInterval(draw, 220);
     </script>
 </body>
 

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Responsive Snake Game with Leaderboard</title>
     <style>
+        /* Your existing styles */
         body {
             display: flex;
             justify-content: center;
@@ -198,6 +199,37 @@
             else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
         }
 
+        // Touch support
+        let touchStartX, touchStartY;
+
+        document.addEventListener("touchstart", handleTouchStart, false);
+        document.addEventListener("touchend", handleTouchEnd, false);
+
+        function handleTouchStart(event) {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }
+
+        function handleTouchEnd(event) {
+            const touch = event.changedTouches[0];
+            const touchEndX = touch.clientX;
+            const touchEndY = touch.clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            const threshold = 50; // Swipe sensitivity
+
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+                if (deltaX > 0 && direction !== "LEFT") direction = "RIGHT";
+                else if (deltaX < 0 && direction !== "RIGHT") direction = "LEFT";
+            } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > threshold) {
+                if (deltaY > 0 && direction !== "UP") direction = "DOWN";
+                else if (deltaY < 0 && direction !== "DOWN") direction = "UP";
+            }
+        }
+
         function draw() {
             if (isGameOver) return;
 
@@ -258,20 +290,23 @@
             updateLeaderboard();
         }
 
+        function startGame() {
+            playerName = playerNameInput.value.trim();
+            if (!playerName) {
+                alert("Please enter your name");
+                return;
+            }
+
+            playerNameInput.disabled = true;
+            initializeGame();
+            game = setInterval(draw, 100);
+        }
+
         function restartGame() {
             retryButton.style.display = "none";
             initializeGame();
-            game = setInterval(draw, 200);
+            game = setInterval(draw, 100);
         }
-
-        function startGame() {
-            playerName = playerNameInput.value.trim() || "Player";
-            playerNameInput.value = "";
-            initializeGame();
-            game = setInterval(draw, 200);
-        }
-
-        initializeGame();
     </script>
 </body>
 

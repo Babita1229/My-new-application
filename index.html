@@ -12,7 +12,9 @@
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
+
             background-color: #7f6c9a;
+
             color: #fff;
             margin: 0;
             height: 100vh;
@@ -30,6 +32,13 @@
             border: 2px solid #8774ee;
             background-color: #1a1212;
         }
+
+
+        p {
+            font-size: 1.5em;
+            margin-top: 10px;
+        }
+
 
         .retry {
             display: none;
@@ -132,6 +141,7 @@
 </head>
 
 <body>
+
     <div class="game-container">
         <h1>Snake Game</h1>
         <canvas id="gameCanvas"></canvas>
@@ -148,10 +158,12 @@
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 
+
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const retryButton = document.querySelector(".retry");
+
         const leaderboardList = document.getElementById("leaderboard");
         const playerNameInput = document.getElementById("playerName");
 
@@ -160,20 +172,24 @@
 
         let boxSize = 20;
         let score = 0;
+
         let snake;
         let direction;
         let food;
         let game;
+
         let onePointBallCount = 0;
         let isGameOver = false;
         let leaderboard = [];
         let playerName = "";
+
 
         function initializeGame() {
             score = 0;
             snake = [{ x: boxSize * 5, y: boxSize * 5 }];
             direction = "RIGHT";
             document.getElementById("score").innerText = score;
+
             food = generateFood();
             onePointBallCount = 0;
             isGameOver = false;
@@ -295,6 +311,7 @@
             if (!playerName) {
                 alert("Please enter your name");
                 return;
+
             }
 
             playerNameInput.disabled = true;
@@ -307,6 +324,7 @@
             initializeGame();
             game = setInterval(draw, 100);
         }
+
     </script>
 </body>
 
